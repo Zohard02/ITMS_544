@@ -3,7 +3,7 @@
  {"Sid":"DevDynamoDBTaggedDevTables","Effect":"Allow","Action": ["dynamodb:GetItem","dynamodb:PutItem","dynamodb:Query"],
   "Resource":"arn:aws:dynamodb:*:*:table/*-dev","Condition":{"StringEquals":{"aws:ResourceTag/env":"dev"}}},
 
-{"Sid":"DevLambdaInvokeDevOnly","Effect":"Allow","Action":"lambda:InvokeFunction","Resource":"arn:aws:lambda:* :*:function:*-dev-*"},
+{"Sid":"DevLambdaInvokeDevOnly","Effect":"Allow","Action":"lambda:InvokeFunction","Resource":"arn:aws:lambda:*:*:function:*-dev-*"},
  {"Sid":"DenyPrivilegeEscalationAndBilling","Effect":"Deny",
-  "Action":["aws-portal:*","billing:*","iam:CreateUser","iam:CreateRole","iam:CreatePolicy","iam:CreatePolicyVersion","iam:Atta chUserPolicy","iam:AttachGroupPolicy","iam:AttachRolePolicy","iam:PutUserPolicy","iam:PutGroupPolicy","iam:Put RolePolicy","iam:AddUserToGroup","iam:UpdateAssumeRolePolicy","iam:PassRole"],
+  "Action":["aws-portal:*","billing:*","iam:CreateUser","iam:CreateRole","iam:CreatePolicy","iam:CreatePolicyVersion","iam:AttachUserPolicy","iam:AttachGroupPolicy","iam:AttachRolePolicy","iam:PutUserPolicy","iam:PutGroupPolicy","iam:PutRolePolicy","iam:AddUserToGroup","iam:UpdateAssumeRolePolicy","iam:PassRole"],
   "Resource":"*"}]}
