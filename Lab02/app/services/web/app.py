@@ -55,7 +55,7 @@ def guard():
     except cognito_auth.AuthError as e:
         if session.get("jwt"):
             nimbus.log_event("session_jwt_rejected", reason=str(e), remote=request.remote_addr)
-        session.clear()
+            session.clear()
         return redirect(url_for("login"))
     if request.method == "POST":
         if not hmac.compare_digest(request.form.get("csrf", ""), session.get("csrf", "x")):
