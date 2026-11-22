@@ -76,7 +76,7 @@ locals {
       Condition = { NumericLessThan = { "s3:TlsVersion" = "1.2" } }
     },
   ]
-  extra_statements = var.extra_policy_json == "" ? [] : jsondecode(var.extra_policy_json).Statement
+  extra_statements = jsondecode(var.extra_policy_json == "" ? "{\"Statement\":[]}" : var.extra_policy_json).Statement
 }
 
 resource "aws_s3_bucket_policy" "this" {
