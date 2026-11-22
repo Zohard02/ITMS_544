@@ -24,7 +24,8 @@ module "log_bucket" {
 module "data_bucket" {
   source      = "./modules/secure_bucket"
   bucket_name = local.data_bucket
-  log_bucket  = module.log_bucket.id
+  log_bucket  = local.log_bucket
+  depends_on  = [module.log_bucket] # wait for the log bucket and its policy before turning on access logging
   log_prefix  = "s3-access/data/"
   # Data perimeter: the service roles may only touch this bucket through OUR VPC endpoint.
   extra_policy_json = templatefile("${path.module}/policies/bucket-vpce-only.json.tftpl", {
@@ -37,7 +38,8 @@ module "data_bucket" {
 module "artifact_bucket" {
   source      = "./modules/secure_bucket"
   bucket_name = local.artifact_bucket
-  log_bucket  = module.log_bucket.id
+  log_bucket  = local.log_bucket
+  depends_on  = [module.log_bucket] # wait for the log bucket and its policy before turning on access logging
   log_prefix  = "s3-access/artifacts/"
   extra_policy_json = templatefile("${path.module}/policies/bucket-vpce-only.json.tftpl", {
     bucket     = local.artifact_bucket
