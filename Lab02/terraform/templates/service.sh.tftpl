@@ -91,7 +91,7 @@ Group=nimbus
 EnvironmentFile=/etc/nimbus/service.env
 WorkingDirectory=$APP/app
 ExecStart=$APP/venv/bin/gunicorn --bind 0.0.0.0:${port} --workers 2 --threads 2 \
-  --access-logfile /var/log/nimbus/access.log --error-logfile /var/log/nimbus/error.log $TLS_ARGS services.$SERVICE.app:app
+  --access-logfile /var/log/nimbus/access.log --error-logfile /var/log/nimbus/error.log --capture-output $TLS_ARGS services.$SERVICE.app:app
 Restart=on-failure
 RestartSec=5
 LogsDirectory=nimbus
