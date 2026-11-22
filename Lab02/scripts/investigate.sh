@@ -7,9 +7,9 @@ U="${1:?usage: $0 <username>}"
 ACCT="$(aws sts get-caller-identity --query Account --output text)"
 BUCKET="lab02-nimbus-$ACCT"
 echo "== 1. CloudTrail (AWS side: who did what to this IAM user, last 90 days, free)"
-aws cloudtrail lookup-events --lookup-attributes AttributeKey=Username,AttributeValue="$U" --max-results 20 \
+aws cloudtrail lookup-events --region us-east-1 --lookup-attributes AttributeKey=Username,AttributeValue="$U" --max-results 20 \
   --query 'Events[].[EventTime,EventName,Username]' --output table
-aws cloudtrail lookup-events --lookup-attributes AttributeKey=ResourceName,AttributeValue="$U" --max-results 20 \
+aws cloudtrail lookup-events --region us-east-1 --lookup-attributes AttributeKey=ResourceName,AttributeValue="$U" --max-results 20 \
   --query 'Events[].[EventTime,EventName,Username]' --output table
 echo "== 2. Registry audit trail (app side, S3)"
 aws s3 ls "s3://$BUCKET/audit/" | grep -- "-$U.json" || echo "no audit entries for $U"
