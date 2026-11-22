@@ -1,0 +1,5 @@
+-r app/requirements.txt
+pytest>=8
+moto[iam,s3,ssm,sts]>=5
+cryptography>=42
+python-hcl2>=4.3

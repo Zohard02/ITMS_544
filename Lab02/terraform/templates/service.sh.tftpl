@@ -1,0 +1,130 @@
+#!/bin/bash
+# First boot of one microservice instance: ${service}.
+# This script contains NO secrets. It fetches its code from the artifact bucket and its certificate and
+# key from Parameter Store using the instance role. Output goes to the serial console, because there is no SSH:
+#   aws ec2 get-console-output --instance-id <id> --latest --output text
+exec > >(tee /var/log/lab02-boot.log | logger -t lab02 -s 2>/dev/console) 2>&1
+set -euxo pipefail
+
+export AWS_DEFAULT_REGION=${region}
+SERVICE=${service}
+APP=/opt/nimbus
+TLS=/etc/nimbus/tls
+
+# Cost safety net: shut down (and so terminate) after the lab window.
+shutdown -h +${shutdown_min} "lab02 auto-shutdown" || true
+
+# The NAT instance may still be booting, so every network step is retried.
+retry() { for i in 1 2 3 4 5 6 7 8 9 10; do "$@" && return 0; echo "retry $i: $*"; sleep 15; done; return 1; }
+
+retry dnf install -y python3.11 python3.11-pip unzip openssl amazon-cloudwatch-agent
+useradd --system --shell /sbin/nologin --home-dir $APP nimbus || true
+
+# ---- 1. THE CODE: download the exact artifact Terraform built and check its hash before using it ----
+mkdir -p $APP
+retry aws s3 cp s3://${artifact_bucket}/${artifact_key} /tmp/app.zip --only-show-errors
+echo "${artifact_sha}  /tmp/app.zip" | sha256sum -c -
+unzip -oq /tmp/app.zip -d $APP/app
+python3.11 -m venv $APP/venv
+retry $APP/venv/bin/pip install --no-cache-dir -r $APP/app/requirements.txt
+
+# ---- 2. THE CERTIFICATES: the CA, and this service's own certificate and key ----
+install -d -m 0750 -o root -g nimbus /etc/nimbus $TLS
+fetch() { aws ssm get-parameter --name "$1" --with-decryption --query Parameter.Value --output text > "$2"; }
+retry fetch ${param_prefix}/tls/ca $TLS/ca.pem
+retry fetch ${param_prefix}/tls/$SERVICE/cert $TLS/service.pem
+retry fetch ${param_prefix}/tls/$SERVICE/key $TLS/service.key
+%{ if is_web ~}
+# The browser facing certificate is self signed and made here, for this instance's public address.
+# Its private key never leaves this machine. Compare the fingerprint below with what your browser shows.
+TOKEN="$(curl -s -X PUT http://169.254.169.254/latest/api/token -H 'X-aws-ec2-metadata-token-ttl-seconds: 60')"
+PUBIP="$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/public-ipv4)"
+openssl req -x509 -newkey ec -pkeyopt ec_paramgen_curve:prime256v1 -nodes -days 3 -subj "/CN=$PUBIP" \
+  -addext "subjectAltName=IP:$PUBIP" -keyout $TLS/browser.key -out $TLS/browser.pem
+echo "BROWSER CERT SHA256 $(openssl x509 -in $TLS/browser.pem -noout -fingerprint -sha256)"
+%{ endif ~}
+chown root:nimbus $TLS/*
+chmod 0640 $TLS/*.pem
+chmod 0640 $TLS/*.key
+
+# ---- 3. SETTINGS: names only, never secrets ----
+cat > /etc/nimbus/service.env <<ENV
+AWS_REGION=${region}
+AWS_DEFAULT_REGION=${region}
+NIMBUS_BUCKET=${data_bucket}
+NIMBUS_PARAM_PREFIX=${param_prefix}
+SERVICE_NAME=$SERVICE
+PYTHONUNBUFFERED=1
+COGNITO_USER_POOL_ID=${pool_id}
+COGNITO_CLIENT_ID=${client_id}
+INTERNAL_CA=$TLS/ca.pem
+INTERNAL_CLIENT_CERT=$TLS/service.pem
+INTERNAL_CLIENT_KEY=$TLS/service.key
+%{ if is_web ~}
+ONBOARD_URL=${onboarding_url}
+OFFBOARD_URL=${offboarding_url}
+DASHBOARD_URL=${dashboard_url}
+COOKIE_SECURE=1
+%{ endif ~}
+ENV
+chmod 0640 /etc/nimbus/service.env
+chown root:nimbus /etc/nimbus/service.env
+
+# ---- 4. THE SERVICE: gunicorn under systemd, sandboxed ----
+%{ if is_web ~}
+# The browser has no client certificate, so the console uses TLS without demanding one.
+TLS_ARGS="--certfile $TLS/browser.pem --keyfile $TLS/browser.key"
+%{ else ~}
+# Mutual TLS: the connection is refused unless the caller shows a certificate signed by our CA (--cert-reqs 2).
+TLS_ARGS="--certfile $TLS/service.pem --keyfile $TLS/service.key --ca-certs $TLS/ca.pem --cert-reqs 2"
+%{ endif ~}
+
+cat > /etc/systemd/system/nimbus.service <<UNIT
+[Unit]
+Description=Nimbus $SERVICE microservice
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=nimbus
+Group=nimbus
+EnvironmentFile=/etc/nimbus/service.env
+WorkingDirectory=$APP/app
+ExecStart=$APP/venv/bin/gunicorn --bind 0.0.0.0:${port} --workers 2 --threads 2 \
+  --access-logfile /var/log/nimbus/access.log --error-logfile /var/log/nimbus/error.log $TLS_ARGS services.$SERVICE.app:app
+Restart=on-failure
+RestartSec=5
+LogsDirectory=nimbus
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+RestrictNamespaces=true
+LockPersonality=true
+CapabilityBoundingSet=
+AmbientCapabilities=
+SystemCallArchitectures=native
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target
+UNIT
+systemctl daemon-reload
+systemctl enable --now nimbus
+sleep 5
+systemctl --no-pager status nimbus || true
+
+# ---- 5. LOGS: ship the application logs to CloudWatch Logs (group ${log_group}, one stream per instance) ----
+cat > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json <<CW
+{"agent":{"run_as_user":"root"},
+ "logs":{"logs_collected":{"files":{"collect_list":[
+  {"file_path":"/var/log/nimbus/access.log","log_group_name":"${log_group}","log_stream_name":"$SERVICE-access"},
+  {"file_path":"/var/log/nimbus/error.log","log_group_name":"${log_group}","log_stream_name":"$SERVICE-error"}]}}}}
+CW
+/opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json || true
+echo "lab02 $SERVICE ready"

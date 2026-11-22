@@ -1,0 +1,51 @@
+{
+ "Version": "2012-10-17",
+ "Statement": [
+  {
+   "Sid": "ReadOnlyCostAndDashboards",
+   "Effect": "Allow",
+   "Action": [
+    "ce:Get*",
+    "ce:Describe*",
+    "ce:List*",
+    "budgets:ViewBudget",
+    "cloudwatch:GetDashboard",
+    "cloudwatch:ListDashboards",
+    "quicksight:DescribeDashboard",
+    "quicksight:ListDashboards"
+   ],
+   "Resource": "*",
+   "Condition": {
+    "StringEquals": {
+     "aws:RequestedRegion": [
+      "us-east-1",
+      "us-east-2"
+     ]
+    }
+   }
+  },
+  {
+   "Sid": "DenyDataAndComputePlane",
+   "Effect": "Deny",
+   "Action": [
+    "s3:*",
+    "ec2:*",
+    "dynamodb:*",
+    "lambda:*",
+    "ssm:*",
+    "iam:CreateUser",
+    "iam:CreateRole",
+    "iam:CreatePolicy",
+    "iam:CreatePolicyVersion",
+    "iam:AttachUserPolicy",
+    "iam:AttachGroupPolicy",
+    "iam:AttachRolePolicy",
+    "iam:PutUserPolicy",
+    "iam:PutGroupPolicy",
+    "iam:PutRolePolicy",
+    "iam:AddUserToGroup"
+   ],
+   "Resource": "*"
+  }
+ ]
+}

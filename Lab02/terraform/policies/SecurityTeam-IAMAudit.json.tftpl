@@ -1,0 +1,4 @@
+{"Version":"2012-10-17","Statement":[
+ {"Sid":"IAMReadAndAudit","Effect":"Allow","Action": ["iam:Get*","iam:List*","iam:GenerateCredentialReport","iam:GenerateServiceLastAccessedDetails","iam:SimulateP rincipalPolicy","iam:SimulateCustomPolicy","cloudtrail:LookupEvents","access-analyzer:List*","access-analyzer:Get*"],"Resource":"*"},
+ {"Sid":"AuthorOnlyNimbusPolicies","Effect":"Allow","Action": ["iam:CreatePolicy","iam:CreatePolicyVersion","iam:DeletePolicyVersion"],"Resource":"arn:aws:iam::$ {account_id}:policy/nimbus/*"},
+ {"Sid":"NoApplicationDataOrSecrets","Effect":"Deny","Action": ["s3:GetObject","ssm:GetParameter","ssm:GetParameters","dynamodb:GetItem","dynamodb:Query"],"Resource":"*"}]}

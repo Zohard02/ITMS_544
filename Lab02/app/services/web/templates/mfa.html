@@ -1,0 +1,6 @@
+{% extends "base.html" %}{% block body %}
+<div class="card form"><h1>{% if setup %}Set up your authenticator app{% else %}Enter your code{% endif %}</h1>
+{% if setup %}<p class="sub">First sign in. Add this secret to an authenticator app (type it in as a time based key), then enter the 6 digit code it shows.</p>
+<p><code>{{ secret }}</code></p><p class="sub">Setup link for apps that accept it: <code>{{ uri }}</code></p> {% else %}<p class="sub">Open your authenticator app and enter the current 6 digit code.</p>{% endif %}
+<form method="post"><label>6 digit code</label><input name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" required>
+<p><button>Verify</button></p></form></div>{% endblock %}

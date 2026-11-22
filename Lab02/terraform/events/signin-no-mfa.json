@@ -1,0 +1,8 @@
+{
+  "source": ["aws.signin"],
+  "detail-type": ["AWS Console Sign In via CloudTrail"],
+  "detail": {
+    "additionalEventData": { "MFAUsed": ["No"] },
+    "responseElements": { "ConsoleLogin": ["Success"] }
+  }
+}

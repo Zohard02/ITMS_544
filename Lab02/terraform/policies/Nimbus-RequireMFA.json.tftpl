@@ -1,0 +1,9 @@
+{"Version":"2012-10-17","Statement":[
+ {"Sid":"AllowSelfServiceCredentialSetup","Effect":"Allow",
+  "Action": ["iam:ChangePassword","iam:GetUser","iam:CreateVirtualMFADevice","iam:DeleteVirtualMFADevice","iam:EnableMFADe vice","iam:ListMFADevices","iam:ResyncMFADevice"],
+  "Resource":["arn:aws:iam::${account_id}:user/nimbus/$${aws:username}","arn:aws:iam::${account_id}:mfa/$$ {aws:username}"]},
+ {"Sid":"AllowMFAHelperCallsOnStar","Effect":"Allow",
+  "Action":["iam:ListVirtualMFADevices","iam:GetAccountPasswordPolicy"],"Resource":"*"},
+ {"Sid":"DenyEverythingExceptMFASetupWhenNoMFA","Effect":"Deny",
+  "NotAction": ["iam:ChangePassword","iam:GetUser","iam:CreateVirtualMFADevice","iam:DeleteVirtualMFADevice","iam:EnableMFADe vice","iam:ListMFADevices","iam:ListVirtualMFADevices","iam:ResyncMFADevice","iam:GetAccountPasswordPolicy","s ts:GetSessionToken"],
+  "Resource":"*","Condition":{"BoolIfExists":{"aws:MultiFactorAuthPresent":"false"}}}]}

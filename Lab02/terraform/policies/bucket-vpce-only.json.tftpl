@@ -1,0 +1,25 @@
+{
+ "Version": "2012-10-17",
+ "Statement": [
+  {
+   "Sid": "ServiceRolesMustUseOurEndpoint",
+   "Effect": "Deny",
+   "Principal": {
+    "AWS": "*"
+   },
+   "Action": "s3:*",
+   "Resource": [
+    "arn:aws:s3:::${bucket}",
+    "arn:aws:s3:::${bucket}/*"
+   ],
+   "Condition": {
+    "ArnLike": {
+     "aws:PrincipalArn": "arn:aws:iam::${account_id}:role/*nimbus-*-svc"
+    },
+    "StringNotEquals": {
+     "aws:SourceVpce": "${vpce_id}"
+    }
+   }
+  }
+ ]
+}

@@ -1,0 +1,30 @@
+#!/bin/bash
+# NAT instance first boot. It lets the private subnets reach the AWS APIs (IAM has no VPC endpoint) and nothing else.
+# A managed NAT Gateway does the same job for about $32 a month and is NOT in the free tier. A t3.micro is.
+exec > >(tee /var/log/lab02-boot.log | logger -t lab02 -s 2>/dev/console) 2>&1
+set -euxo pipefail
+
+# Cost safety net: the instance shuts down, and shutdown behaviour = terminate removes it.
+shutdown -h +${shutdown_min} "lab02 auto-shutdown" || true
+
+for i in 1 2 3 4 5 6; do dnf install -y iptables-services && break || sleep 10; done
+
+# Allow the kernel to forward packets that are not addressed to this machine.
+echo 'net.ipv4.ip_forward = 1' > /etc/sysctl.d/90-nat.conf
+sysctl -p /etc/sysctl.d/90-nat.conf
+
+IFACE="$(ip route show default | awk '{print $5; exit}')"
+
+# Default deny for everything forwarded, then allow only what a private service needs: HTTPS, and its replies.
+iptables -F
+iptables -t nat -F
+iptables -P INPUT ACCEPT
+iptables -P FORWARD DROP
+iptables -A FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT
+iptables -A FORWARD -s ${vpc_cidr} -p tcp --dport 443 -j ACCEPT
+iptables -t nat -A POSTROUTING -o "$IFACE" -s ${vpc_cidr} -j MASQUERADE
+iptables -L -n -v
+iptables -t nat -L -n -v
+service iptables save
+systemctl enable --now iptables
+echo "lab02 nat ready"

@@ -1,0 +1,70 @@
+{
+ "Version": "2012-10-17",
+ "Statement": [
+  {
+   "Sid": "CreateAndTagNimbusUsersOnly",
+   "Effect": "Allow",
+   "Action": [
+    "iam:CreateUser",
+    "iam:TagUser",
+    "iam:GetUser",
+    "iam:CreateLoginProfile"
+   ],
+   "Resource": "arn:aws:iam::${account_id}:user/nimbus/*"
+  },
+  {
+   "Sid": "AttachOnlyTheMFAGuardPolicy",
+   "Effect": "Allow",
+   "Action": "iam:AttachUserPolicy",
+   "Resource": "arn:aws:iam::${account_id}:user/nimbus/*",
+   "Condition": {
+    "ArnEquals": {
+     "iam:PolicyARN": "arn:aws:iam::${account_id}:policy/nimbus/Nimbus-RequireMFA"
+    }
+   }
+  },
+  {
+   "Sid": "AddToNimbusGroupsOnly",
+   "Effect": "Allow",
+   "Action": "iam:AddUserToGroup",
+   "Resource": [
+    "arn:aws:iam::${account_id}:user/nimbus/*",
+    "arn:aws:iam::${account_id}:group/nimbus/*"
+   ]
+  },
+  {
+   "Sid": "RegistryAndAuditWrite",
+   "Effect": "Allow",
+   "Action": [
+    "s3:GetObject",
+    "s3:PutObject"
+   ],
+   "Resource": [
+    "arn:aws:s3:::${bucket}/registry/*",
+    "arn:aws:s3:::${bucket}/audit/*"
+   ]
+  },
+  {
+   "Sid": "ListRegistryForExistenceChecks",
+   "Effect": "Allow",
+   "Action": "s3:ListBucket",
+   "Resource": "arn:aws:s3:::${bucket}",
+   "Condition": {
+    "StringLike": {
+     "s3:prefix": [
+      "registry/*"
+     ]
+    }
+   }
+  },
+  {
+   "Sid": "ReadInternalToken",
+   "Effect": "Allow",
+   "Action": "ssm:GetParameter",
+   "Resource": [
+    "arn:aws:ssm:${region}:${account_id}:parameter${param_prefix}/internal-token/current",
+    "arn:aws:ssm:${region}:${account_id}:parameter${param_prefix}/internal-token/previous"
+   ]
+  }
+ ]
+}

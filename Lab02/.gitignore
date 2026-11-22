@@ -1,0 +1,19 @@
+# Terraform: state and plans can contain secrets (passwords, private keys). NEVER commit them.
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+tfplan
+crash.log
+terraform/.build/
+terraform/terraform.tfvars
+terraform/backend.hcl
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+# Credentials of any kind
+.env
+*.pem
+*.key

@@ -1,0 +1,3 @@
+{"Version":"2012-10-17","Statement":[{"Sid":"WriteFlowLogsToOneGroup","Effect":"Allow",
+ "Action":["logs:CreateLogStream","logs:PutLogEvents","logs:DescribeLogStreams"],
+ "Resource":"arn:aws:logs:${region}:${account_id}:log-group:${log_group}:*"}]}

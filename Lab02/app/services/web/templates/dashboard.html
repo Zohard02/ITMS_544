@@ -1,0 +1,22 @@
+{% extends "base.html" %}{% block body %}
+<h1>Identity dashboard</h1><p class="sub">Registry (S3) reconciled with live IAM. Generated
+{{ d.generated_at[:19] }} UTC · <a href="?refresh=1">refresh</a></p>
+{% set s = d.summary %}
+<div class="tiles"><div class="tile"><div class="n">{{ s.active or 0 }}</div><div class="l">Existing (active)</div></div>
+<div class="tile"><div class="n">{{ s.offboarded or 0 }}</div><div class="l">Offboarded</div></div>
+<div class="tile"><div class="n">{{ s.total or 0 }}</div><div class="l">All identities</div></div>
+<div class="tile"><div class="n">{{ s.no_mfa or 0 }}</div><div class="l">Active without MFA</div></div>
+<div class="tile"><div class="n">{{ s.attention or 0 }}</div><div class="l">Need attention</div></div></div> <div class="tabs" id="tabs"><button class="on" data-f="all">All</button><button class="ghost" data-f="active">Active</button>
+<button class="ghost" data-f="offboarded">Offboarded</button><button class="ghost" data-f="attention">Needs attention</button></div>
+<div class="card scroll"><table><thead><tr><th>User</th><th>Name</th><th>Persona</th><th>Lifecycle</th><th>IAM user</th><th>Group</th><th>Console</th><th>MFA</th><th>Active keys</th><th>Onboarded</th><th>Offboarded</th><th>Health</th></tr></thead><tbody>
+{% for e in d.employees %}{% set i = e.iam %}
+<tr data-status="{{ e.status }}" data-attn="{{ 1 if e.tone in ('bad','warn') else 0 }}">
+<td><b>{{ e.username }}</b></td><td>{{ e.full_name }}</td><td>{{ e.persona }}</td><td>{{ e.status }}</td> <td>{{ 'yes' if i.iam_exists else 'no' }}</td><td>{{ (i.groups or [])|join(', ') or '-' }}</td>
+<td>{{ ('enabled' if i.console else 'off') if i.iam_exists else '-' }}</td>
+<td>{{ ('✔ ' if i.mfa else '✘') if i.iam_exists else '-' }}</td><td>{{ i.active_keys if i.iam_exists else '-'
+}}</td>
+<td>{{ e.onboarded_at[:10] or '-' }}</td><td>{{ e.offboarded_at[:10] or '-' }}</td>
+<td><span class="pill {{ e.tone }}">{{ e.health }}</span></td></tr>
+{% else %}<tr><td colspan="12" class="mute">No employees yet - onboard your first one.</td></tr>{% endfor %}</tbody></table></div>
+<script>document.getElementById('tabs').addEventListener('click',function(ev){var b=ev.target.closest('button');if(!b)return; this.querySelectorAll('button').forEach(function(x){x.className='ghost'});b.className='on';var f=b.dataset.f; document.querySelectorAll('tbody tr[data-status]').forEach(function(r){r.style.display=(f==='all'|| (f==='attention'?r.dataset.attn==='1':r.dataset.status===f))?'':'none'})});</script>
+{% endblock %}

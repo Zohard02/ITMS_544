@@ -1,0 +1,8 @@
+{% extends "base.html" %}{% block body %}
+<h1>Offboard an employee</h1><p class="sub">Deny-all, deactivate keys, remove console password and group membership. The IAM user is kept (tagged) for audit.</p>
+<div class="card form">{% if active %}<form method="post" onsubmit="return confirm('Offboard '+this.username.value+'? This cannot be undone from the UI.')">
+<input type="hidden" name="csrf" value="{{ csrf }}"><label>Employee</label>
+<select name="username">{% for e in active %}<option value="{{ e.username }}">{{ e.username }} -
+{{ e.full_name }} ({{ e.persona }})</option>{% endfor %}</select>
+<label>Reason</label><input name="reason" placeholder="resigned / end of contract / ...">
+<p><button class="danger">Offboard</button></p></form>{% else %}<p class="mute">No active employees.</p>{% endif %}</div>{% endblock %}

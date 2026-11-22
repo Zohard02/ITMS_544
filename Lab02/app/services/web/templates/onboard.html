@@ -1,0 +1,17 @@
+{% extends "base.html" %}{% block body %}
+<h1>Onboard a new employee</h1><p class="sub">Creates an IAM user, attaches the MFA guard, and places them in the persona's group.</p>
+{% if result %}
+<div class="card form"><div class="msg ok">Onboarded <b>{{ result.username }}</b> into
+<b>{{ result.group }}</b>.</div>
+{% if result.temp_password %}<p><b>One-time console password</b> (shown once, never stored). The user must change it at first sign-in:</p>
+<code class="pw">{{ result.temp_password }}</code>{% endif %}
+<p class="mute">MFA must be enrolled by <b>{{ result.mfa_deadline }}</b>. Until then every action except MFA/password setup is denied.</p>
+<p class="mute">Steps: {{ result.steps|join(' → ') }}</p>
+<p><a href="{{ url_for('onboard') }}"><button class="ghost">Onboard another</button></a></p></div>
+{% else %}
+<div class="card form"><form method="post"><input type="hidden" name="csrf" value="{{ csrf }}">
+<label>IAM username</label><input name="username" pattern="[a-z][a-z0-9._-]{2,31}" placeholder="alice" required>
+<label>Full name</label><input name="full_name" required>
+<label>Email</label><input name="email" type="email" required>
+<label>Persona</label><select name="persona">{% for p,g in personas.items() %}<option value="{{ p }}">{{ p }} → {{ g }}</option>{% endfor %}</select>
+<label><input type="checkbox" name="console_access" checked>Create console login (temporary password)</label> <p><button>Onboard</button></p></form></div>{% endif %}{% endblock %}

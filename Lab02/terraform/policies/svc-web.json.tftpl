@@ -1,0 +1,15 @@
+{
+ "Version": "2012-10-17",
+ "Statement": [
+  {
+   "Sid": "ReadOwnSecrets",
+   "Effect": "Allow",
+   "Action": "ssm:GetParameter",
+   "Resource": [
+    "arn:aws:ssm:${region}:${account_id}:parameter${param_prefix}/web-login",
+    "arn:aws:ssm:${region}:${account_id}:parameter${param_prefix}/internal-token/current",
+    "arn:aws:ssm:${region}:${account_id}:parameter${param_prefix}/internal-token/previous"
+   ]
+  }
+ ]
+}

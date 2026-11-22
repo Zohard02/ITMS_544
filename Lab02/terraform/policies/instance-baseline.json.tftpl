@@ -1,0 +1,33 @@
+{
+ "Version": "2012-10-17",
+ "Statement": [
+  {
+   "Sid": "DownloadTheApplicationArtifact",
+   "Effect": "Allow",
+   "Action": "s3:GetObject",
+   "Resource": "arn:aws:s3:::${artifact_bucket}/app/*"
+  },
+  {
+   "Sid": "ReadTheCA",
+   "Effect": "Allow",
+   "Action": "ssm:GetParameter",
+   "Resource": "arn:aws:ssm:${region}:${account_id}:parameter${param_prefix}/tls/ca"
+  },
+  {
+   "Sid": "ReadOnlyMyOwnCertificateAndKey",
+   "Effect": "Allow",
+   "Action": "ssm:GetParameter",
+   "Resource": "arn:aws:ssm:${region}:${account_id}:parameter${param_prefix}/tls/${service}/*"
+  },
+  {
+   "Sid": "WriteApplicationLogs",
+   "Effect": "Allow",
+   "Action": [
+    "logs:CreateLogStream",
+    "logs:PutLogEvents",
+    "logs:DescribeLogStreams"
+   ],
+   "Resource": "arn:aws:logs:${region}:${account_id}:log-group:${log_group}:*"
+  }
+ ]
+}

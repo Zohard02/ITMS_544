@@ -1,0 +1,31 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Nimbus Identity Console</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--ink:#1a2233;--mute:#667085;--line:#e3e7ee;--brand:#2f5bea; --ok:#0e7a4b;--okbg:#e3f6ec;--warn:#9a5b00;--warnbg:#fff1d6;--bad:#b42318;--badbg:#fde7e4;--mutebg:#eceff4}
+@media(prefers-color-scheme:dark){:root{--bg:#0f1420;--card:#171e2e;--ink:#e8ecf4;--mute:#9aa6bd;--line:#2a3347;--brand:#7c9bff; --ok:#5ad19a;--okbg:#10321f;--warn:#f0b254;--warnbg:#3a2a0a;--bad:#ff8a7d;--badbg:#3d1511;--mutebg:#222b3d}} *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,Segoe UI,sans-serif}
+header{background:var(--card);border-bottom:1px solid var(--line)}
+.bar{max-width:1100px;margin:auto;padding:12px 16px;display:flex;gap:20px;align-items:center;flex-wrap:wrap} .bar b{font-size:16px}.bar a{color:var(--mute);text-decoration:none;padding:4px 0;border-bottom:2px solid transparent}
+.bar a.on,.bar a:hover{color:var(--ink);border-color:var(--brand)}.sp{flex:1}
+main{max-width:1100px;margin:24px auto;padding:0 16px}
+h1{font-size:22px;margin:0 0 4px}p.sub{color:var(--mute);margin:0 0 20px} .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:20px} label{display:block;font-weight:600;margin:14px 0 4px}
+input,select,textarea{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--ink);font:inherit}
+input[type=checkbox]{width:auto;margin-right:6px} button{background:var(--brand);color:#fff;border:0;border-radius:7px;padding:9px 16px;font:inherit;font-weight:600;cursor:pointer}
+button.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}button.danger{background:var(--bad);color:#fff}
+.form{max-width:520px}.msg{padding:10px 14px;border-radius:8px;margin-bottom:14px} .msg.ok{background:var(--okbg);color:var(--ok)}.msg.bad{background:var(--badbg);color:var(--bad)} .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px} .tile{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px}
+.tile .n{font-size:28px;font-weight:700}.tile .l{color:var(--mute);font-size:13px}
+table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);font-size:14px;white-space:nowrap} th{color:var(--mute);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.04em} .scroll{overflow-x:auto}.pill{display:inline-block;padding:2px 9px;border-radius:99px;font-size:12px;font-weight:700} .pill.ok{background:var(--okbg);color:var(--ok)}.pill.warn{background:var(--warnbg);color:var(--warn)} .pill.bad{background:var(--badbg);color:var(--bad)}.pill.muted{background:var(--mutebg);color:var(--mute)} .tabs{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}.tabs button{padding:6px 12px}.tabs button.on{background:var(--brand);color:#fff}
+code.pw{display:block;font-size:17px;padding:12px;background:var(--bg);border:1px dashed var(--line);border-radius:8px;margin:8px 0;user-select:all}
+.mute{color:var(--mute)}
+</style></head><body>
+<header><div class="bar"><b>☁  Nimbus Identity Console</b>
+{% if user %}<a href="{{ url_for('dashboard') }}" class="{{ 'on' if
+request.endpoint=='dashboard' }}">Dashboard</a>
+<a href="{{ url_for('onboard') }}" class="{{ 'on' if request.endpoint=='onboard' }}">Onboard</a>
+<a href="{{ url_for('offboard') }}" class="{{ 'on' if request.endpoint=='offboard' }}">Offboard</a>
+<span class="sp"></span><span class="mute">{{ user }}</span>
+<form method="post" action="{{ url_for('logout') }}" style="margin:0"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="ghost">Sign out</button></form>{% endif %}
+</div></header><main>
+{% with m = get_flashed_messages(with_categories=true) %}{% for c,t in m %}<div class="msg {{ c }}">{{ t
+}}</div>{% endfor %}{% endwith %}
+{% block body %}{% endblock %}</main></body></html>
